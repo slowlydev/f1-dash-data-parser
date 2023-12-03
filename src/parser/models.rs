@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
-use serde_json::Value;
 
-use super::deserializer::{inflate_zlib, kf_remover};
+use super::deserializer::{inflate_zlib, kf_remover, route_message_type};
 
 pub mod data;
 
@@ -17,7 +16,8 @@ pub struct SocketMessage {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct Update {
-    pub a: (String, Value, String),
+    #[serde(deserialize_with = "route_message_type")]
+    pub a: (String, DataType, String),
 }
 
 #[derive(Debug, Deserialize)]
@@ -36,6 +36,7 @@ pub struct Data {
     pub lap_count: data::LapCount,
     pub timing_data: data::TimingData,
     pub team_radio: data::TeamRadio,
+    pub tla_rcm: data::TlaRcm,
 
     #[serde(deserialize_with = "kf_remover")]
     pub driver_list: HashMap<String, data::DriverList>,
@@ -44,4 +45,32 @@ pub struct Data {
     pub car_data: data::CarData,
     #[serde(rename = "Position.z", deserialize_with = "inflate_zlib")]
     pub position: data::Positions,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum DataType {
+    Heartbeat(data::Heartbeat),
+    ExtrapolatedClock(data::ExtrapolatedClock),
+    TopThree(data::TopThree),
+    TimingStats(data::TimingStats),
+    TimingAppData(data::TimingAppData),
+    WeatherData(data::WeatherData),
+    TrackStatus(data::TrackStatus),
+    RaceControlMessages(data::RaceControlMessages),
+    SessionInfo(data::SessionInfo),
+    SessionData(data::SessionData),
+    LapCount(data::LapCount),
+    TimingData(data::TimingData),
+    TeamRadio(data::TeamRadio),
+
+    TlaRcm(data::TlaRcm),
+
+    #[serde(deserialize_with = "kf_remover")]
+    DriverList(HashMap<String, data::DriverList>),
+
+    #[serde(deserialize_with = "inflate_zlib")]
+    CarData(data::CarData),
+    #[serde(deserialize_with = "inflate_zlib")]
+    Positions(data::Positions),
 }

@@ -98,8 +98,6 @@ pub enum Status {
 #[serde(rename_all = "PascalCase")]
 pub struct RaceControlMessages {
     pub messages: Vec<RaceControlMessage>,
-    #[serde(rename = "_kf")]
-    pub kf: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -179,8 +177,6 @@ pub struct SessionInfo {
     pub end_date: String,
     pub gmt_offset: String,
     pub path: String,
-    // #[serde(rename = "_kf")]
-    // pub kf: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -219,8 +215,6 @@ pub struct Country {
 #[serde(rename_all = "PascalCase")]
 pub struct TeamRadio {
     pub captures: Vec<Capture>,
-    // #[serde(rename = "_kf")]
-    // pub kf: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -275,7 +269,6 @@ pub enum Compound {
 pub struct TimingData {
     #[serde(deserialize_with = "kf_remover")]
     pub lines: HashMap<String, TimingDataLine>,
-    pub withheld: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -353,7 +346,6 @@ pub struct Speeds {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingStats {
-    pub withheld: bool,
     #[serde(deserialize_with = "kf_remover")]
     pub lines: HashMap<String, TimingStatsLine>,
     pub session_type: String,
@@ -396,7 +388,6 @@ pub struct PersonalBestLapTime {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TopThree {
-    pub withheld: bool,
     pub lines: Vec<LineElement>,
 }
 
@@ -436,4 +427,11 @@ pub struct WeatherData {
     pub track_temp: String,
     pub wind_direction: String,
     pub wind_speed: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TlaRcm {
+    timestamp: String,
+    message: String,
 }

@@ -1,33 +1,31 @@
-use std::collections::HashMap;
-
-use serde_json::Value;
-
 pub mod deserializer;
 pub mod models;
 
 #[derive(Debug)]
 pub enum ParsedMessage {
-    Update(HashMap<String, Value>),
+    Update(Vec<models::DataType>),
     Replay(models::Data),
     Empty,
 }
 
 pub fn parse_message(message: String) -> ParsedMessage {
-    // let Ok(socket_message) = serde_json::from_str::<models::SocketMessage>(&message) else {
-    //     return ParsedMessage::Empty;
-    // };
+    println!("message: {message:?}");
 
     let socket_message: models::SocketMessage =
         serde_json::from_str::<models::SocketMessage>(&message).unwrap();
 
     if let Some(updates) = socket_message.m {
-        let mut map: HashMap<String, Value> = HashMap::new();
+        let mut vec: Vec<models::DataType> = Vec::new();
+
+        if updates.len() < 1 {
+            return ParsedMessage::Empty;
+        };
 
         for update in updates {
-            map.insert(update.a.0, update.a.1);
+            vec.push(update.a.1);
         }
 
-        return ParsedMessage::Update(map);
+        return ParsedMessage::Update(vec);
     };
 
     if let Some(replay) = socket_message.r {

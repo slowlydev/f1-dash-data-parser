@@ -1,23 +1,25 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
+use serde_json::Value;
 
-use super::deserializer::{inflate_zlib, kf_remover, route_message_type};
+use super::deserializer::{inflate_zlib, kf_remover};
 
 pub mod data;
+pub mod markers;
+pub mod updates;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct SocketMessage {
-    pub m: Option<Vec<Update>>,
+    pub m: Option<Vec<Message>>,
     pub r: Option<Data>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
-pub struct Update {
-    #[serde(deserialize_with = "route_message_type")]
-    pub a: (String, DataType, String),
+pub struct Message {
+    pub a: Update,
 }
 
 #[derive(Debug, Deserialize)]
@@ -49,28 +51,37 @@ pub struct Data {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub enum DataType {
-    Heartbeat(data::Heartbeat),
-    ExtrapolatedClock(data::ExtrapolatedClock),
-    TopThree(data::TopThree),
-    TimingStats(data::TimingStats),
-    TimingAppData(data::TimingAppData),
-    WeatherData(data::WeatherData),
-    TrackStatus(data::TrackStatus),
-    RaceControlMessages(data::RaceControlMessages),
-    SessionInfo(data::SessionInfo),
-    SessionData(data::SessionData),
-    LapCount(data::LapCount),
-    TimingData(data::TimingData),
-    TeamRadio(data::TeamRadio),
+pub enum Update {
+    Heartbeat(markers::HeartbeatMarker, updates::Heartbeat, String),
+    TopThree(markers::TopThreeMarker, updates::TopThree, String),
+    TimingStats(markers::TimingStatsMarker, updates::TimingStats, String),
+    TimingAppData(markers::TimingAppDataMarker, updates::TimingAppData, String),
+    WeatherData(markers::WeatherDataMarker, updates::WeatherData, String),
+    TrackStatus(markers::TrackStatusMarker, updates::TrackStatus, String),
+    SessionInfo(markers::SessionInfoMarker, updates::SessionInfo, String),
+    LapCount(markers::LapCountMarker, updates::LapCount, String),
+    TimingData(markers::TimingDataMarker, updates::TimingData, String),
+    TeamRadio(markers::TeamRadioMarker, updates::TeamRadio, String),
+    TlaRcm(markers::TlaRcmMarker, updates::TlaRcm, String),
 
-    TlaRcm(data::TlaRcm),
+    ExtrapolatedClock(
+        markers::ExtrapolatedClockMarker,
+        updates::ExtrapolatedClock,
+        String,
+    ),
 
-    #[serde(deserialize_with = "kf_remover")]
-    DriverList(HashMap<String, data::DriverList>),
+    RaceControlMessages(
+        markers::RaceControlMessagesMarker,
+        updates::RaceControlMessages,
+        String,
+    ),
 
-    #[serde(deserialize_with = "inflate_zlib")]
-    CarData(data::CarData),
-    #[serde(deserialize_with = "inflate_zlib")]
-    Positions(data::Positions),
+    SessionData(markers::SessionDataMarker, updates::SessionData, String),
+
+    // DriverList(markers::DriverListMarker, updates::Driver, String),
+    // CarData(markers::CarDataMarker, updates::CarData, String),
+    // Positions(markers::PositionsMarker, updates::Positions, String),
+    DriverList(markers::DriverListMarker, Value, String),
+    CarData(markers::CarDataMarker, Value, String),
+    Positions(markers::PositionsMarker, Value, String),
 }

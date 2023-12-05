@@ -3,7 +3,7 @@ pub mod models;
 
 #[derive(Debug)]
 pub enum ParsedMessage {
-    Update(Vec<models::DataType>),
+    Update(Vec<models::Update>),
     Replay(models::Data),
     Empty,
 }
@@ -15,14 +15,14 @@ pub fn parse_message(message: String) -> ParsedMessage {
         serde_json::from_str::<models::SocketMessage>(&message).unwrap();
 
     if let Some(updates) = socket_message.m {
-        let mut vec: Vec<models::DataType> = Vec::new();
+        let mut vec: Vec<models::Update> = Vec::new();
 
         if updates.len() < 1 {
             return ParsedMessage::Empty;
         };
 
         for update in updates {
-            vec.push(update.a.1);
+            vec.push(update.a);
         }
 
         return ParsedMessage::Update(vec);

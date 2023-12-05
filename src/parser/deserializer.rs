@@ -1,6 +1,7 @@
 use base64::{engine::general_purpose, Engine};
 use flate2::read::DeflateDecoder;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
+use serde_json::Value;
 
 use std::collections::HashMap;
 
@@ -34,6 +35,20 @@ where
     }
 
     Ok(vec)
+}
+
+pub fn flatten_map_to_vec_optional<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let val: Option<Value> = Deserialize::deserialize(deserializer)?;
+
+    let Some(ddd) = val else {
+        return Ok(None);
+    };
+    let vec: Vec<T> = flatten_map_to_vec(ddd).map_err(serde::de::Error::custom)?;
+    Ok(Some(vec))
 }
 
 pub fn inflate_zlib<'de, D, T>(deserializer: D) -> Result<T, D::Error>

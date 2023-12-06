@@ -35,10 +35,10 @@ pub struct Data {
     pub race_control_messages: data::RaceControlMessages,
     pub session_info: data::SessionInfo,
     pub session_data: data::SessionData,
-    pub lap_count: data::LapCount,
     pub timing_data: data::TimingData,
-    pub team_radio: data::TeamRadio,
-    pub tla_rcm: data::TlaRcm,
+    pub team_radio: Option<data::TeamRadio>, // TODO remove after testing
+    pub tla_rcm: Option<data::TlaRcm>,       // TODO remove after testing
+    pub lap_count: Option<data::LapCount>,
 
     #[serde(deserialize_with = "kf_remover")]
     pub driver_list: HashMap<String, data::DriverList>,
@@ -60,7 +60,7 @@ pub enum Update {
     TrackStatus(markers::TrackStatusMarker, updates::TrackStatus, String),
     SessionInfo(markers::SessionInfoMarker, updates::SessionInfo, String),
     LapCount(markers::LapCountMarker, updates::LapCount, String),
-    TimingData(markers::TimingDataMarker, updates::TimingData, String),
+    TimingData(markers::TimingDataMarker, updates::TimingData, String), // TODO doesn't work yet
     TeamRadio(markers::TeamRadioMarker, updates::TeamRadio, String),
     TlaRcm(markers::TlaRcmMarker, updates::TlaRcm, String),
 
@@ -73,6 +73,18 @@ pub enum Update {
     RaceControlMessages(
         markers::RaceControlMessagesMarker,
         updates::RaceControlMessages,
+        String,
+    ),
+
+    PitLaneTimeCollection(
+        markers::PitLaneTimeCollectionMarker,
+        updates::PitLaneTimeCollection,
+        String,
+    ),
+
+    LapSeries(
+        markers::LapSeriesMarker,
+        HashMap<String, updates::LapSeries>,
         String,
     ),
 

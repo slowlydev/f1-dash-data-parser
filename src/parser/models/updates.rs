@@ -3,7 +3,10 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::parser::deserializer::{flatten_map_to_vec, flatten_map_to_vec_optional, kf_remover};
+use crate::parser::deserializer::{
+    flatten_map_to_vec, flatten_map_to_vec_optional, kf_remover, map_or_vec_to_vec,
+    map_or_vec_to_vec_optional,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -105,7 +108,7 @@ pub struct RaceControlMessages {
 #[serde(rename_all = "PascalCase")]
 pub struct RaceControlMessage {
     pub utc: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
     pub category: Category,
     pub flag: Option<Flag>,
     pub scope: Option<Scope>,
@@ -113,6 +116,7 @@ pub struct RaceControlMessage {
     pub sector: Option<i64>,
     pub status: Option<String>,
     pub mode: Option<String>,
+    pub racing_number: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -121,6 +125,7 @@ pub enum Category {
     Flag,
     Other,
     SafetyCar,
+    CarEvent,
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,21 +140,28 @@ pub enum Flag {
     Green,
     #[serde(rename = "YELLOW")]
     Yellow,
+    #[serde(rename = "RED")]
+    Red,
+    #[serde(rename = "BLUE")]
+    Blue,
+    #[serde(rename = "BLACK AND WHITE")]
+    BlackAndWhite,
 }
 
 #[derive(Debug, Deserialize)]
 pub enum Scope {
     Sector,
     Track,
+    Driver,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SessionData {
-    #[serde(deserialize_with = "flatten_map_to_vec_optional")]
-    pub series: Option<Vec<Lap>>,
-    #[serde(deserialize_with = "flatten_map_to_vec_optional")]
-    pub status_series: Option<Vec<Status>>,
+    // #[serde(deserialize_with = "flatten_map_to_vec_optional")]
+    pub series: Option<HashMap<String, Lap>>,
+    // #[serde(deserialize_with = "flatten_map_to_vec_optional")]
+    pub status_series: Option<HashMap<String, Status>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -239,10 +251,12 @@ pub struct TimingAppData {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingAppDataLine {
-    pub racing_number: String,
-    pub line: i64,
-    pub grid_pos: String,
-    pub stints: Vec<Stint>,
+    pub racing_number: Option<String>,
+    pub line: Option<i64>,
+    pub grid_pos: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "map_or_vec_to_vec_optional")]
+    pub stints: Option<Vec<Stint>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -250,12 +264,12 @@ pub struct TimingAppDataLine {
 pub struct Stint {
     pub lap_time: Option<String>,
     pub lap_number: Option<i64>,
-    pub lap_flags: i64,
-    pub compound: Compound,
-    pub new: String,
-    pub tyres_not_changed: String,
-    pub total_laps: i64,
-    pub start_laps: i64,
+    pub lap_flags: Option<i64>,
+    pub compound: Option<Compound>,
+    pub new: Option<String>,
+    pub tyres_not_changed: Option<String>,
+    pub total_laps: Option<i64>,
+    pub start_laps: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -266,6 +280,12 @@ pub enum Compound {
     Medium,
     #[serde(rename = "SOFT")]
     Soft,
+    #[serde(rename = "INTERMEDIATE")]
+    Intermediate,
+    #[serde(rename = "WET")]
+    Wet,
+    #[serde(rename = "UNKNOWN")]
+    Unknown,
 }
 
 #[derive(Debug, Deserialize)]
@@ -291,7 +311,9 @@ pub struct TimingDataLine {
     pub status: Option<i64>,
     pub number_of_laps: Option<i64>,
     pub number_of_pit_stops: Option<i64>,
-    pub sectors: Vec<Sector>,
+    #[serde(default)]
+    #[serde(deserialize_with = "flatten_map_to_vec_optional")]
+    pub sectors: Option<Vec<Sector>>,
     pub speeds: Option<Speeds>,
     pub best_lap_time: Option<BestLapTime>,
     pub last_lap_time: Option<LastLapTime>,
@@ -301,35 +323,37 @@ pub struct TimingDataLine {
 #[serde(rename_all = "PascalCase")]
 pub struct BestLapTime {
     pub value: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct IntervalToPositionAhead {
-    pub value: String,
-    pub catching: bool,
+    pub value: Option<String>,
+    pub catching: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct LastLapTime {
-    pub value: String,
-    pub status: i64,
-    pub overall_fastest: bool,
-    pub personal_fastest: bool,
+    pub value: Option<String>,
+    pub status: Option<i64>,
+    pub overall_fastest: Option<bool>,
+    pub personal_fastest: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Sector {
-    pub stopped: bool,
-    pub previous_value: String,
-    pub segments: Vec<Segment>,
-    pub value: String,
-    pub status: i64,
-    pub overall_fastest: bool,
-    pub personal_fastest: bool,
+    pub stopped: Option<bool>,
+    pub previous_value: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "flatten_map_to_vec_optional")]
+    pub segments: Option<Vec<Segment>>,
+    pub value: Option<String>,
+    pub status: Option<i64>,
+    pub overall_fastest: Option<bool>,
+    pub personal_fastest: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -341,10 +365,10 @@ pub struct Segment {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Speeds {
-    pub i1: LastLapTime,
-    pub i2: LastLapTime,
-    pub fl: LastLapTime,
-    pub st: LastLapTime,
+    pub i1: Option<LastLapTime>,
+    pub i2: Option<LastLapTime>,
+    pub fl: Option<LastLapTime>,
+    pub st: Option<LastLapTime>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -358,35 +382,37 @@ pub struct TimingStats {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingStatsLine {
-    pub line: i64,
-    pub racing_number: String,
-    pub personal_best_lap_time: PersonalBestLapTime,
-    pub best_sectors: Vec<BestSector>,
-    pub best_speeds: BestSpeeds,
+    pub line: Option<i64>,
+    pub racing_number: Option<String>,
+    pub personal_best_lap_time: Option<PersonalBestLapTime>,
+    // pub best_sectors: Option<Vec<BestSector>>,
+    // pub best_speeds: Option<BestSpeeds>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BestSector {
-    pub position: i64,
     pub value: String,
+    pub position: Option<i64>,
+    pub overall_fastest: Option<bool>,
+    pub personal_fastest: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct BestSpeeds {
-    pub i1: BestSector,
-    pub i2: BestSector,
-    pub fl: BestSector,
-    pub st: BestSector,
+    pub i1: Option<BestSector>,
+    pub i2: Option<BestSector>,
+    pub fl: Option<BestSector>,
+    pub st: Option<BestSector>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PersonalBestLapTime {
-    pub lap: i64,
-    pub position: i64,
-    pub value: String,
+    pub lap: Option<i64>,
+    pub position: Option<i64>,
+    pub value: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -439,4 +465,31 @@ pub struct WeatherData {
 pub struct TlaRcm {
     timestamp: String,
     message: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PitLaneTimeCollection {
+    pub pit_times: HashMap<String, PitTimeEnum>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum PitTimeEnum {
+    PitTime(PitTime),
+    Deleted(Vec<String>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PitTime {
+    pub racing_number: String,
+    pub duration: String,
+    pub lap: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct LapSeries {
+    pub lap_position: HashMap<String, String>,
 }

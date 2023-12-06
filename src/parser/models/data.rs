@@ -104,7 +104,7 @@ pub struct RaceControlMessages {
 #[serde(rename_all = "PascalCase")]
 pub struct RaceControlMessage {
     pub utc: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
     pub category: Category,
     pub flag: Option<Flag>,
     pub scope: Option<Scope>,
@@ -120,6 +120,7 @@ pub enum Category {
     Flag,
     Other,
     SafetyCar,
+    CarEvent,
 }
 
 #[derive(Debug, Deserialize)]
@@ -134,12 +135,19 @@ pub enum Flag {
     Green,
     #[serde(rename = "YELLOW")]
     Yellow,
+    #[serde(rename = "RED")]
+    Red,
+    #[serde(rename = "BLUE")]
+    Blue,
+    #[serde(rename = "BLACK AND WHITE")]
+    BlackAndWhite,
 }
 
 #[derive(Debug, Deserialize)]
 pub enum Scope {
     Sector,
     Track,
+    Driver,
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,7 +161,8 @@ pub struct SessionData {
 #[serde(rename_all = "PascalCase")]
 pub struct Series {
     pub utc: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
+    pub qualifying_part: Option<i8>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -237,8 +246,8 @@ pub struct TimingAppData {
 pub struct TimingAppDataLine {
     pub racing_number: String,
     pub line: i64,
-    pub grid_pos: String,
-    pub stints: Vec<Stint>,
+    pub grid_pos: Option<String>,
+    pub stints: Option<Vec<Stint>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -262,11 +271,18 @@ pub enum Compound {
     Medium,
     #[serde(rename = "SOFT")]
     Soft,
+    #[serde(rename = "INTERMEDIATE")]
+    Intermediate,
+    #[serde(rename = "WET")]
+    Wet,
+    #[serde(rename = "UNKNOWN")]
+    Unknown,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingData {
+    pub session_part: Option<i8>,
     #[serde(deserialize_with = "kf_remover")]
     pub lines: HashMap<String, TimingDataLine>,
 }
@@ -274,10 +290,10 @@ pub struct TimingData {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingDataLine {
-    pub gap_to_leader: String,
-    pub interval_to_position_ahead: IntervalToPositionAhead,
+    pub gap_to_leader: Option<String>,
+    pub interval_to_position_ahead: Option<IntervalToPositionAhead>,
     pub line: i64,
-    pub position: String,
+    pub position: String, // TODO maybe issue here?
     pub show_position: bool,
     pub racing_number: String,
     pub retired: bool,
@@ -285,7 +301,7 @@ pub struct TimingDataLine {
     pub pit_out: bool,
     pub stopped: bool,
     pub status: i64,
-    pub number_of_laps: i64,
+    pub number_of_laps: Option<i64>,
     pub number_of_pit_stops: Option<i64>,
     pub sectors: Vec<Sector>,
     pub speeds: Speeds,
@@ -297,7 +313,7 @@ pub struct TimingDataLine {
 #[serde(rename_all = "PascalCase")]
 pub struct BestLapTime {
     pub value: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -320,7 +336,7 @@ pub struct LastLapTime {
 #[serde(rename_all = "PascalCase")]
 pub struct Sector {
     pub stopped: bool,
-    pub previous_value: String,
+    pub previous_value: Option<String>,
     pub segments: Vec<Segment>,
     pub value: String,
     pub status: i64,
@@ -364,7 +380,7 @@ pub struct TimingStatsLine {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BestSector {
-    pub position: i64,
+    pub position: Option<i64>,
     pub value: String,
 }
 
@@ -380,8 +396,8 @@ pub struct BestSpeeds {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PersonalBestLapTime {
-    pub lap: i64,
-    pub position: i64,
+    pub lap: Option<i64>,
+    pub position: Option<i64>,
     pub value: String,
 }
 

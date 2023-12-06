@@ -14,9 +14,8 @@ where
     let mut raw_map: HashMap<String, serde_json::Value> = Deserialize::deserialize(deserializer)?;
     raw_map.remove("_kf");
     for (key, value) in raw_map {
-        if let Ok(item) = serde_json::from_value::<T>(value) {
-            map.insert(key, item);
-        }
+        let item = serde_json::from_value::<T>(value).map_err(serde::de::Error::custom)?;
+        map.insert(key, item);
     }
     Ok(map)
 }
@@ -26,12 +25,12 @@ where
     D: Deserializer<'de>,
     T: DeserializeOwned,
 {
-    let map: HashMap<String, serde_json::Value> = Deserialize::deserialize(deserializer)?;
+    let map: HashMap<String, T> = Deserialize::deserialize(deserializer)?;
     let mut vec: Vec<T> = Vec::new();
 
     for (_, value) in map {
-        let item = serde_json::from_value::<T>(value).map_err(serde::de::Error::custom)?;
-        vec.push(item);
+        // let item = serde_json::from_value::<T>(value).map_err(serde::de::Error::custom)?;
+        vec.push(value);
     }
 
     Ok(vec)
@@ -42,13 +41,70 @@ where
     D: Deserializer<'de>,
     T: DeserializeOwned,
 {
-    let val: Option<Value> = Deserialize::deserialize(deserializer)?;
+    let optional_map: Option<HashMap<String, T>> = Deserialize::deserialize(deserializer)?;
 
-    let Some(ddd) = val else {
-        return Ok(None);
+    if let Some(map) = optional_map {
+        let mut vec: Vec<T> = Vec::new();
+        for (_, value) in map {
+            vec.push(value);
+        }
+        return Ok(Some(vec));
+    }
+
+    Ok(None)
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum VecOrMap<T> {
+    Vec(Vec<T>),
+    Map(HashMap<String, T>),
+}
+
+pub fn map_or_vec_to_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let vec_or_map: VecOrMap<T> = Deserialize::deserialize(deserializer)?;
+    let res: Vec<T> =
+        match vec_or_map {
+            VecOrMap::Vec(vec) => vec,
+            VecOrMap::Map(map) => {
+                let mut vec: Vec<T> = Vec::new();
+                for (_, value) in map {
+                    vec.push(value);
+                }
+                vec
+            }
+        };
+
+    Ok(res)
+}
+
+pub fn map_or_vec_to_vec_optional<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let vec_or_map_option: Option<VecOrMap<T>> = Deserialize::deserialize(deserializer)?;
+
+    if let Some(vec_or_map) = vec_or_map_option {
+        let res: Vec<T> = match vec_or_map {
+            VecOrMap::Vec(vec) => vec,
+            VecOrMap::Map(map) => {
+                let mut vec: Vec<T> = Vec::new();
+                for (_, value) in map {
+                    vec.push(value);
+                }
+                vec
+            }
+        };
+
+        return Ok(Some(res));
     };
-    let vec: Vec<T> = flatten_map_to_vec(ddd).map_err(serde::de::Error::custom)?;
-    Ok(Some(vec))
+
+    Ok(None)
 }
 
 pub fn inflate_zlib<'de, D, T>(deserializer: D) -> Result<T, D::Error>

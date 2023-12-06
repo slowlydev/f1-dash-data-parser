@@ -9,8 +9,6 @@ pub enum ParsedMessage {
 }
 
 pub fn parse_message(message: String) -> ParsedMessage {
-    println!("message: {message:?}");
-
     let socket_message: models::SocketMessage =
         serde_json::from_str::<models::SocketMessage>(&message).unwrap();
 

@@ -72,6 +72,16 @@ pub enum TlaRcmMarker {
 }
 
 #[derive(Debug, Deserialize)]
+pub enum PitLaneTimeCollectionMarker {
+    PitLaneTimeCollection,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum LapSeriesMarker {
+    LapSeries,
+}
+
+#[derive(Debug, Deserialize)]
 pub enum DriverListMarker {
     DriverList,
 }

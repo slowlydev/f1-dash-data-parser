@@ -12,7 +12,10 @@ fn main() {
     println!("parsing");
 
     for message in messages {
+        println!("");
         println!("raw message: {message}");
+        println!("");
+
         let parsed = parser::parse_message(message);
 
         match parsed {

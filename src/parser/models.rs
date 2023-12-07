@@ -62,7 +62,7 @@ pub enum Update {
     TrackStatus(markers::TrackStatusMarker, updates::TrackStatus, String),
     SessionInfo(markers::SessionInfoMarker, updates::SessionInfo, String),
     LapCount(markers::LapCountMarker, updates::LapCount, String),
-    TimingData(markers::TimingDataMarker, updates::TimingData, String), // TODO doesn't work yet
+    TimingData(markers::TimingDataMarker, updates::TimingData, String),
     TeamRadio(markers::TeamRadioMarker, updates::TeamRadio, String),
     TlaRcm(markers::TlaRcmMarker, updates::TlaRcm, String),
 
@@ -92,14 +92,11 @@ pub enum Update {
 
     SessionData(markers::SessionDataMarker, updates::SessionData, String),
 
-    // DriverList(markers::DriverListMarker, updates::Driver, String),
-    // CarData(markers::CarDataMarker, updates::CarData, String),
-    // Positions(markers::PositionsMarker, updates::Positions, String),
-    DriverList(markers::DriverListMarker, Value, String),
-
     #[serde(deserialize_with = "inflate_zlib_variant_car")]
     CarData(markers::CarDataMarker, updates::CarData, String),
 
     #[serde(deserialize_with = "inflate_zlib_variant_pos")]
     Positions(markers::PositionsMarker, updates::Positions, String),
+
+    DriverList(markers::DriverListMarker, Value, String),
 }

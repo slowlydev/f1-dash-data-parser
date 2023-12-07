@@ -52,7 +52,7 @@ pub struct Driver {
 pub struct ExtrapolatedClock {
     pub utc: String,
     pub remaining: String,
-    pub extrapolating: bool,
+    pub extrapolating: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -168,7 +168,8 @@ pub struct SessionData {
 #[serde(rename_all = "PascalCase")]
 pub struct Lap {
     pub utc: String,
-    pub lap: i64,
+    pub lap: Option<i64>,
+    pub qualifying_part: Option<i8>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -291,6 +292,7 @@ pub enum Compound {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TimingData {
+    pub session_part: Option<i8>,
     #[serde(deserialize_with = "kf_remover")]
     pub lines: HashMap<String, TimingDataLine>,
 }
@@ -307,6 +309,7 @@ pub struct TimingDataLine {
     pub retired: Option<bool>,
     pub in_pit: Option<bool>,
     pub pit_out: Option<bool>,
+    pub knocked_out: Option<bool>,
     pub stopped: Option<bool>,
     pub status: Option<i64>,
     pub number_of_laps: Option<i64>,
@@ -315,6 +318,11 @@ pub struct TimingDataLine {
     #[serde(deserialize_with = "flatten_map_to_vec_optional")]
     pub sectors: Option<Vec<Sector>>,
     pub speeds: Option<Speeds>,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "flatten_map_to_vec_optional")]
+    pub best_lap_times: Option<Vec<BestLapTime>>,
+
     pub best_lap_time: Option<BestLapTime>,
     pub last_lap_time: Option<LastLapTime>,
 }
@@ -324,6 +332,8 @@ pub struct TimingDataLine {
 pub struct BestLapTime {
     pub value: String,
     pub lap: Option<i64>,
+    #[serde(rename = "_deleted")]
+    pub deleted: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

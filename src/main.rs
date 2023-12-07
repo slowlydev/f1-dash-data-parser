@@ -11,16 +11,15 @@ fn main() {
 
     println!("parsing");
 
-    for message in messages {
-        println!("");
-        println!("raw message: {message}");
-        println!("");
+    let mut state: parser::State = parser::State::default();
 
+    for message in messages {
         let parsed = parser::parse_message(message);
 
         match parsed {
             parser::ParsedMessage::Empty => (),
-            _ => println!("{parsed:?}"),
+            parser::ParsedMessage::Replay(data) => state = data.into(),
+            parser::ParsedMessage::Update(update) => {}
         };
     }
 

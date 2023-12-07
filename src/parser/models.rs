@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::deserializer::{inflate_zlib, kf_remover};
+use super::deserializer::{
+    inflate_zlib, inflate_zlib_variant_car, inflate_zlib_variant_pos, kf_remover,
+};
 
 pub mod data;
 pub mod markers;
@@ -94,6 +96,10 @@ pub enum Update {
     // CarData(markers::CarDataMarker, updates::CarData, String),
     // Positions(markers::PositionsMarker, updates::Positions, String),
     DriverList(markers::DriverListMarker, Value, String),
-    CarData(markers::CarDataMarker, Value, String),
-    Positions(markers::PositionsMarker, Value, String),
+
+    #[serde(deserialize_with = "inflate_zlib_variant_car")]
+    CarData(markers::CarDataMarker, updates::CarData, String),
+
+    #[serde(deserialize_with = "inflate_zlib_variant_pos")]
+    Positions(markers::PositionsMarker, updates::Positions, String),
 }

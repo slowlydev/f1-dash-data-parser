@@ -1,8 +1,6 @@
 use base64::{engine::general_purpose, Engine};
 use flate2::read::DeflateDecoder;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
-use serde_json::Value;
-
 use std::collections::HashMap;
 
 use super::models::markers;
@@ -63,26 +61,26 @@ enum VecOrMap<T> {
     Map(HashMap<String, T>),
 }
 
-pub fn map_or_vec_to_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: DeserializeOwned,
-{
-    let vec_or_map: VecOrMap<T> = Deserialize::deserialize(deserializer)?;
-    let res: Vec<T> =
-        match vec_or_map {
-            VecOrMap::Vec(vec) => vec,
-            VecOrMap::Map(map) => {
-                let mut vec: Vec<T> = Vec::new();
-                for (_, value) in map {
-                    vec.push(value);
-                }
-                vec
-            }
-        };
+// pub fn map_or_vec_to_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+// where
+//     D: Deserializer<'de>,
+//     T: DeserializeOwned,
+// {
+//     let vec_or_map: VecOrMap<T> = Deserialize::deserialize(deserializer)?;
+//     let res: Vec<T> =
+//         match vec_or_map {
+//             VecOrMap::Vec(vec) => vec,
+//             VecOrMap::Map(map) => {
+//                 let mut vec: Vec<T> = Vec::new();
+//                 for (_, value) in map {
+//                     vec.push(value);
+//                 }
+//                 vec
+//             }
+//         };
 
-    Ok(res)
-}
+//     Ok(res)
+// }
 
 pub fn map_or_vec_to_vec_optional<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
 where
@@ -153,4 +151,20 @@ where
     let decoder: DeflateDecoder<&[u8]> = DeflateDecoder::new(&decoded[..]);
     let data: T = serde_json::from_reader(decoder).map_err(serde::de::Error::custom)?;
     Ok((s.0, data, s.2))
+}
+
+use chrono::{DateTime, NaiveDateTime, Utc};
+
+const FORMAT1: &'static str = "%Y-%m-%dT%H:%M:%S%.3fZ";
+const FORMAT2: &'static str = "%Y-%m-%dT%H:%M:%S";
+
+pub fn parse_chrono_date<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let dt = NaiveDateTime::parse_from_str(&s, FORMAT1)
+        .or_else(|_| NaiveDateTime::parse_from_str(&s, FORMAT2))
+        .map_err(serde::de::Error::custom)?;
+    Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
 }

@@ -35,7 +35,7 @@ pub fn parse_message(message: String) -> ParsedMessage {
     ParsedMessage::Empty
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct State {
     pub heartbeat: Option<models::data::Heartbeat>,
     pub extrapolated_clock: Option<models::data::ExtrapolatedClock>,

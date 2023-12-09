@@ -19,8 +19,12 @@ fn main() {
         match parsed {
             parser::ParsedMessage::Empty => (),
             parser::ParsedMessage::Replay(data) => state = data.into(),
-            parser::ParsedMessage::Update(update) => {}
+            parser::ParsedMessage::Update(update) => {
+                
+            }
         };
+
+        println!("{:?}", state);
     }
 
     println!("done");

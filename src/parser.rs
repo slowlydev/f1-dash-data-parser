@@ -35,25 +35,26 @@ pub fn parse_message(message: String) -> ParsedMessage {
     ParsedMessage::Empty
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct State {
-    pub heartbeat: Option<models::data::Heartbeat>,
+    pub heartbeat: Option<models::Heartbeat>,
     pub extrapolated_clock: Option<models::data::ExtrapolatedClock>,
     pub top_three: Option<models::data::TopThree>,
     pub timing_stats: Option<models::data::TimingStats>,
     pub timing_app_data: Option<models::data::TimingAppData>,
-    pub weather_data: Option<models::data::WeatherData>,
-    pub track_status: Option<models::data::TrackStatus>,
+    pub weather_data: Option<models::WeatherData>,
+    pub track_status: Option<models::TrackStatus>,
     pub race_control_messages: Option<models::data::RaceControlMessages>,
-    pub session_info: Option<models::data::SessionInfo>,
+    pub session_info: Option<models::SessionInfo>,
     pub session_data: Option<models::data::SessionData>,
     pub timing_data: Option<models::data::TimingData>,
     pub team_radio: Option<models::data::TeamRadio>,
-    pub tla_rcm: Option<models::data::TlaRcm>,
-    pub lap_count: Option<models::data::LapCount>,
-    pub driver_list: Option<HashMap<String, models::data::DriverList>>,
+    pub tla_rcm: Option<models::TlaRcm>,
+    pub lap_count: Option<models::LapCount>,
     pub car_data: Option<models::data::CarData>,
-    pub position: Option<models::data::Positions>,
+    pub position: Option<models::Positions>,
+    pub driver_list: Option<HashMap<String, models::data::DriverList>>,
+    pub lap_series: Option<HashMap<String, models::data::LapSeries>>,
 }
 
 impl From<models::Data> for State {
@@ -73,10 +74,43 @@ impl From<models::Data> for State {
             driver_list: Some(data.driver_list),
             car_data: Some(data.car_data),
             position: Some(data.position),
+            lap_series: Some(data.lap_series),
 
             team_radio: data.team_radio,
             tla_rcm: data.tla_rcm,
             lap_count: data.lap_count,
+        }
+    }
+}
+
+impl State {
+    pub fn update_field(&mut self, update: models::Update) {
+        match update {
+            models::Update::Heartbeat(_, heartbeat, _) => self.heartbeat = Some(heartbeat),
+            models::Update::TopThree(_, _, _) => {} // TODO its different o.o
+            models::Update::TimingStats(_, _, _) => {}
+            models::Update::TimingAppData(_, _, _) => {}
+            models::Update::WeatherData(_, weather_data, _) => {
+                self.weather_data = Some(weather_data)
+            }
+            models::Update::TrackStatus(_, track_status, _) => {
+                self.track_status = Some(track_status)
+            }
+            models::Update::SessionInfo(_, session_info, _) => {
+                self.session_info = Some(session_info)
+            }
+            models::Update::LapCount(_, lap_count, _) => self.lap_count = Some(lap_count),
+            models::Update::TimingData(_, _, _) => {}
+            models::Update::TeamRadio(_, _, _) => {}
+            models::Update::TlaRcm(_, tla_rcm, _) => self.tla_rcm = Some(tla_rcm),
+            models::Update::ExtrapolatedClock(_, _, _) => {}
+            models::Update::RaceControlMessages(_, _, _) => {}
+            models::Update::PitLaneTimeCollection(_, _, _) => {}
+            models::Update::LapSeries(_, _, _) => {}
+            models::Update::SessionData(_, _, _) => {}
+            models::Update::CarData(_, _, _) => {}
+            models::Update::Positions(_, positions, _) => self.position = Some(positions),
+            models::Update::DriverList(_, _, _) => {}
         }
     }
 }

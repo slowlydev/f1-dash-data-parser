@@ -1,4 +1,5 @@
 mod file_loader;
+mod history;
 mod parser;
 
 fn main() {
@@ -11,21 +12,24 @@ fn main() {
 
     println!("parsing");
 
-    let mut state: parser::State = parser::State::default();
+    let mut history: history::History = history::History::new();
 
     for message in messages {
         let parsed = parser::parse_message(message);
 
         match parsed {
             parser::ParsedMessage::Empty => (),
-            parser::ParsedMessage::Replay(data) => state = data.into(),
-            parser::ParsedMessage::Update(update) => {
-                
+            parser::ParsedMessage::Replay(data) => history.add_data(data),
+            parser::ParsedMessage::Update(updates) => {
+                for update in updates {
+                    history.add_update(update)
+                }
             }
         };
-
-        println!("{:?}", state);
     }
+
+    println!("latest frame: {:?}", history.get_latest());
+    println!("hisotry length: {:?}", history.frames.len());
 
     println!("done");
 }

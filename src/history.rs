@@ -1,4 +1,7 @@
 use chrono::Utc;
+use serde::Serialize;
+use surrealdb::engine::local::{Db, Mem};
+use surrealdb::Surreal;
 
 use crate::parser::{
     self,
@@ -7,11 +10,14 @@ use crate::parser::{
 
 pub struct History {
     pub frames: Vec<Frame>,
+    db: Surreal<Db>,
 }
 
 impl History {
-    pub fn new() -> History {
-        History { frames: vec![] }
+    pub async fn new() -> History {
+        let db: Surreal<Db> = Surreal::new::<Mem>(()).await.unwrap();
+
+        History { frames: vec![], db }
     }
 
     pub fn get_latest(&self) -> Option<&Frame> {
@@ -33,6 +39,7 @@ impl History {
 
     pub fn add_data(&mut self, data: Data) {
         self.frames.push(Frame::new(data.into()))
+        // self.db.create("frame").content(Frame::new(data.into()))
     }
 
     pub fn add_update(&mut self, update: Update) {
@@ -45,7 +52,7 @@ impl History {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Frame {
     timestamp: chrono::DateTime<Utc>,
     state: parser::State,

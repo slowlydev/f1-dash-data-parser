@@ -1,7 +1,7 @@
 use chrono::Utc;
-use serde::Serialize;
-use surrealdb::engine::local::{Db, Mem};
-use surrealdb::Surreal;
+// use serde::Serialize;
+// use surrealdb::engine::local::{Db, Mem};
+// use surrealdb::Surreal;
 
 use crate::parser::{
     self,
@@ -10,14 +10,14 @@ use crate::parser::{
 
 pub struct History {
     pub frames: Vec<Frame>,
-    db: Surreal<Db>,
+    // db: Surreal<Db>,
 }
 
 impl History {
-    pub async fn new() -> History {
-        let db: Surreal<Db> = Surreal::new::<Mem>(()).await.unwrap();
+    pub fn new() -> History {
+        // let db: Surreal<Db> = Surreal::new::<Mem>(()).await.unwrap();
 
-        History { frames: vec![], db }
+        History { frames: vec![] }
     }
 
     pub fn get_latest(&self) -> Option<&Frame> {
@@ -42,17 +42,19 @@ impl History {
         // self.db.create("frame").content(Frame::new(data.into()))
     }
 
-    pub fn add_update(&mut self, update: Update) {
+    pub fn add_updates(&mut self, updates: Vec<Update>) {
         if let Some(last) = self.frames.last() {
             // me make a new frame, as we want the new timestamp here
             let mut new: Frame = Frame::new(last.state.clone());
-            new.state.update_field(update);
+            for update in updates {
+                new.state.update_field(update);
+            }
             self.frames.push(new);
         }
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Frame {
     timestamp: chrono::DateTime<Utc>,
     state: parser::State,

@@ -20,11 +20,7 @@ fn main() {
         match parsed {
             parser::ParsedMessage::Empty => (),
             parser::ParsedMessage::Replay(data) => history.add_data(data),
-            parser::ParsedMessage::Update(updates) => {
-                for update in updates {
-                    history.add_update(update)
-                }
-            }
+            parser::ParsedMessage::Update(updates) => history.add_updates(updates),
         };
     }
 

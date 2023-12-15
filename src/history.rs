@@ -38,18 +38,37 @@ impl History {
     // }
 
     pub fn add_data(&mut self, data: Data) {
-        self.frames.push(Frame::new(data.into()))
-        // self.db.create("frame").content(Frame::new(data.into()))
+        // self.frames.push(Frame::new(data.into()))
+        let frame = Frame {
+            state: data.clone().into(),
+            timestamp: data.heartbeat.utc,
+        };
+
+        self.frames.push(frame)
     }
 
     pub fn add_updates(&mut self, updates: Vec<Update>) {
-        if let Some(last) = self.frames.last() {
-            // me make a new frame, as we want the new timestamp here
-            let mut new: Frame = Frame::new(last.state.clone());
-            for update in updates {
-                new.state.update_field(update);
+        if let Some(first) = updates.first() {
+            let create_new_frame = if let Some(last) = self.frames.last() {
+                (first.get_timestamp() - last.timestamp).num_seconds() >= 2
+            } else {
+                false
+            };
+
+            if create_new_frame {
+                if let Some(last) = self.frames.last() {
+                    self.frames.push(Frame {
+                        state: last.state.clone(),
+                        timestamp: first.get_timestamp(),
+                    });
+                }
             }
-            self.frames.push(new);
+        }
+
+        if let Some(last) = self.frames.last_mut() {
+            for update in updates {
+                last.state.update_field(update);
+            }
         }
     }
 }
@@ -58,13 +77,4 @@ impl History {
 pub struct Frame {
     timestamp: chrono::DateTime<Utc>,
     state: parser::State,
-}
-
-impl Frame {
-    pub fn new(state: parser::State) -> Frame {
-        Frame {
-            timestamp: Utc::now(),
-            state,
-        }
-    }
 }

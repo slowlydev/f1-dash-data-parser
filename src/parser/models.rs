@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::{format::parse, DateTime, NaiveDateTime, Utc};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -25,7 +25,7 @@ pub struct Message {
     pub a: Update,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
 pub struct Data {
     pub heartbeat: Heartbeat,
@@ -103,6 +103,37 @@ pub enum Update {
     Positions(markers::PositionsMarker, Positions, String),
 
     DriverList(markers::DriverListMarker, Value, String),
+}
+
+const FORMAT1: &'static str = "%Y-%m-%dT%H:%M:%S%.3fZ";
+
+impl Update {
+    pub fn get_timestamp(&self) -> DateTime<Utc> {
+        let timestamp = match &self {
+            Update::Heartbeat(_, _, t) => t,
+            Update::TopThree(_, _, t) => t,
+            Update::TimingStats(_, _, t) => t,
+            Update::TimingAppData(_, _, t) => t,
+            Update::WeatherData(_, _, t) => t,
+            Update::TrackStatus(_, _, t) => t,
+            Update::SessionInfo(_, _, t) => t,
+            Update::LapCount(_, _, t) => t,
+            Update::TimingData(_, _, t) => t,
+            Update::TeamRadio(_, _, t) => t,
+            Update::TlaRcm(_, _, t) => t,
+            Update::ExtrapolatedClock(_, _, t) => t,
+            Update::RaceControlMessages(_, _, t) => t,
+            Update::PitLaneTimeCollection(_, _, t) => t,
+            Update::LapSeries(_, _, t) => t,
+            Update::SessionData(_, _, t) => t,
+            Update::CarData(_, _, t) => t,
+            Update::Positions(_, _, t) => t,
+            Update::DriverList(_, _, t) => t,
+        };
+
+        let dt = NaiveDateTime::parse_from_str(&timestamp, FORMAT1).unwrap();
+        DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc)
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -5,27 +5,6 @@ use crate::parser::deserializer::kf_remover;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
-pub struct CarData {
-    pub entries: Vec<EntryElement>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct EntryElement {
-    pub utc: String,
-    #[serde(deserialize_with = "kf_remover")]
-    pub cars: HashMap<String, Car>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct Car {
-    #[serde(deserialize_with = "kf_remover")]
-    pub channels: HashMap<String, i64>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
 pub struct DriverList {
     pub racing_number: String,
     pub broadcast_name: String,
@@ -40,14 +19,6 @@ pub struct DriverList {
     pub headshot_url: Option<String>,
     pub country_code: String,
     pub name_format: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct ExtrapolatedClock {
-    pub utc: String,
-    pub remaining: String,
-    pub extrapolating: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -132,15 +103,15 @@ pub struct StatusSery {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
 pub struct TeamRadio {
-    pub captures: Vec<Capture>,
+    pub captures: Vec<super::Capture>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct Capture {
-    pub utc: String,
-    pub racing_number: String,
-    pub path: String,
+impl From<super::updates::TeamRadio> for TeamRadio {
+    fn from(value: super::updates::TeamRadio) -> Self {
+        TeamRadio {
+            captures: value.captures,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]

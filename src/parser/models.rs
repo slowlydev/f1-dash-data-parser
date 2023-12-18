@@ -29,7 +29,7 @@ pub struct Message {
 #[serde(rename_all = "PascalCase")]
 pub struct Data {
     pub heartbeat: Heartbeat,
-    pub extrapolated_clock: data::ExtrapolatedClock,
+    pub extrapolated_clock: ExtrapolatedClock,
     pub top_three: data::TopThree,
     pub timing_stats: data::TimingStats,
     pub timing_app_data: data::TimingAppData,
@@ -50,7 +50,7 @@ pub struct Data {
     pub driver_list: HashMap<String, data::DriverList>,
 
     #[serde(rename = "CarData.z", deserialize_with = "inflate_zlib")]
-    pub car_data: data::CarData,
+    pub car_data: CarData,
     #[serde(rename = "Position.z", deserialize_with = "inflate_zlib")]
     pub position: Positions,
 }
@@ -70,11 +70,7 @@ pub enum Update {
     TeamRadio(markers::TeamRadioMarker, updates::TeamRadio, String),
     TlaRcm(markers::TlaRcmMarker, TlaRcm, String),
 
-    ExtrapolatedClock(
-        markers::ExtrapolatedClockMarker,
-        updates::ExtrapolatedClock,
-        String,
-    ),
+    ExtrapolatedClock(markers::ExtrapolatedClockMarker, ExtrapolatedClock, String),
 
     RaceControlMessages(
         markers::RaceControlMessagesMarker,
@@ -97,7 +93,7 @@ pub enum Update {
     SessionData(markers::SessionDataMarker, updates::SessionData, String),
 
     #[serde(deserialize_with = "inflate_zlib_variant_car")]
-    CarData(markers::CarDataMarker, updates::CarData, String),
+    CarData(markers::CarDataMarker, CarData, String),
 
     #[serde(deserialize_with = "inflate_zlib_variant_pos")]
     Positions(markers::PositionsMarker, Positions, String),
@@ -254,4 +250,44 @@ pub enum DriverStatus {
     OnTrack,
     #[serde(rename = "OffTrack")]
     OffTrack,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "PascalCase")]
+pub struct ExtrapolatedClock {
+    #[serde(deserialize_with = "parse_chrono_date")]
+    pub utc: DateTime<Utc>,
+    pub remaining: String,
+    pub extrapolating: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "PascalCase")]
+pub struct CarData {
+    pub entries: Vec<EntryElement>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "PascalCase")]
+pub struct EntryElement {
+    #[serde(deserialize_with = "parse_chrono_date")]
+    pub utc: DateTime<Utc>,
+    #[serde(deserialize_with = "kf_remover")]
+    pub cars: HashMap<String, Car>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "PascalCase")]
+pub struct Car {
+    #[serde(deserialize_with = "kf_remover")]
+    pub channels: HashMap<String, i64>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "PascalCase")]
+pub struct Capture {
+    #[serde(deserialize_with = "parse_chrono_date")]
+    pub utc: DateTime<Utc>,
+    pub racing_number: String,
+    pub path: String,
 }

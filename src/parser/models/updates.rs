@@ -9,28 +9,6 @@ use crate::parser::deserializer::{
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
-pub struct CarData {
-    pub entries: Vec<EntryElement>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct EntryElement {
-    #[serde(deserialize_with = "parse_chrono_date")]
-    pub utc: DateTime<Utc>,
-    #[serde(deserialize_with = "kf_remover")]
-    pub cars: HashMap<String, Car>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct Car {
-    #[serde(deserialize_with = "kf_remover")]
-    pub channels: HashMap<String, i64>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
 pub struct Driver {
     pub racing_number: String,
     pub broadcast_name: String,
@@ -45,15 +23,6 @@ pub struct Driver {
     pub headshot_url: Option<String>,
     pub country_code: String,
     pub name_format: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct ExtrapolatedClock {
-    #[serde(deserialize_with = "parse_chrono_date")]
-    pub utc: DateTime<Utc>,
-    pub remaining: String,
-    pub extrapolating: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -146,16 +115,7 @@ pub struct Status {
 #[serde(rename_all = "PascalCase")]
 pub struct TeamRadio {
     #[serde(deserialize_with = "flatten_map_to_vec")]
-    pub captures: Vec<Capture>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "PascalCase")]
-pub struct Capture {
-    #[serde(deserialize_with = "parse_chrono_date")]
-    pub utc: DateTime<Utc>,
-    pub racing_number: String,
-    pub path: String,
+    pub captures: Vec<super::Capture>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

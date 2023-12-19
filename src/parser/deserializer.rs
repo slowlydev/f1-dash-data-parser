@@ -3,8 +3,6 @@ use flate2::read::DeflateDecoder;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 use std::collections::HashMap;
 
-use super::models::markers;
-
 pub fn kf_remover<'de, D, T>(deserializer: D) -> Result<HashMap<String, T>, D::Error>
 where
     D: Deserializer<'de>,
@@ -121,37 +119,37 @@ where
     Ok(data)
 }
 
-pub fn inflate_zlib_variant_car<'de, D, T>(
-    deserializer: D,
-) -> Result<(markers::CarDataMarker, T, String), D::Error>
-where
-    D: Deserializer<'de>,
-    T: DeserializeOwned,
-{
-    let s: (markers::CarDataMarker, String, String) = Deserialize::deserialize(deserializer)?;
-    let decoded: Vec<u8> = general_purpose::STANDARD
-        .decode(s.1)
-        .map_err(serde::de::Error::custom)?;
-    let decoder: DeflateDecoder<&[u8]> = DeflateDecoder::new(&decoded[..]);
-    let data: T = serde_json::from_reader(decoder).map_err(serde::de::Error::custom)?;
-    Ok((s.0, data, s.2))
-}
+// pub fn inflate_zlib_variant_car<'de, D, T>(
+//     deserializer: D,
+// ) -> Result<(markers::CarDataMarker, T, String), D::Error>
+// where
+//     D: Deserializer<'de>,
+//     T: DeserializeOwned,
+// {
+//     let s: (markers::CarDataMarker, String, String) = Deserialize::deserialize(deserializer)?;
+//     let decoded: Vec<u8> = general_purpose::STANDARD
+//         .decode(s.1)
+//         .map_err(serde::de::Error::custom)?;
+//     let decoder: DeflateDecoder<&[u8]> = DeflateDecoder::new(&decoded[..]);
+//     let data: T = serde_json::from_reader(decoder).map_err(serde::de::Error::custom)?;
+//     Ok((s.0, data, s.2))
+// }
 
-pub fn inflate_zlib_variant_pos<'de, D, T>(
-    deserializer: D,
-) -> Result<(markers::PositionsMarker, T, String), D::Error>
-where
-    D: Deserializer<'de>,
-    T: DeserializeOwned,
-{
-    let s: (markers::PositionsMarker, String, String) = Deserialize::deserialize(deserializer)?;
-    let decoded: Vec<u8> = general_purpose::STANDARD
-        .decode(s.1)
-        .map_err(serde::de::Error::custom)?;
-    let decoder: DeflateDecoder<&[u8]> = DeflateDecoder::new(&decoded[..]);
-    let data: T = serde_json::from_reader(decoder).map_err(serde::de::Error::custom)?;
-    Ok((s.0, data, s.2))
-}
+// pub fn inflate_zlib_variant_pos<'de, D, T>(
+//     deserializer: D,
+// ) -> Result<(markers::PositionsMarker, T, String), D::Error>
+// where
+//     D: Deserializer<'de>,
+//     T: DeserializeOwned,
+// {
+//     let s: (markers::PositionsMarker, String, String) = Deserialize::deserialize(deserializer)?;
+//     let decoded: Vec<u8> = general_purpose::STANDARD
+//         .decode(s.1)
+//         .map_err(serde::de::Error::custom)?;
+//     let decoder: DeflateDecoder<&[u8]> = DeflateDecoder::new(&decoded[..]);
+//     let data: T = serde_json::from_reader(decoder).map_err(serde::de::Error::custom)?;
+//     Ok((s.0, data, s.2))
+// }
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 

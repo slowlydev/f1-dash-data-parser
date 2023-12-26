@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -7,7 +5,7 @@ use serde_json::Value;
 #[serde(rename_all = "UPPERCASE")]
 pub struct SocketMessage {
     pub m: Option<Vec<Message>>,
-    pub r: Option<HashMap<String, Value>>,
+    pub r: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]

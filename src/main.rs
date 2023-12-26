@@ -1,7 +1,6 @@
-use std::{fs, io::Write};
-
 mod file_loader;
 mod history;
+mod merge;
 mod parser;
 
 fn main() {
@@ -17,26 +16,19 @@ fn main() {
     let mut history: history::History = history::History::new();
 
     for message in messages {
-        let parsed = parser::parse_message(message);
+        let mut parsed = parser::parse_message(message);
 
         match parsed {
             parser::ParsedMessage::Empty => (),
-            parser::ParsedMessage::Replay(data) => {
-                history.add_data(data);
-            }
-            parser::ParsedMessage::Update(updates) => {
+            parser::ParsedMessage::Replay(state) => history.set_intitial(state),
+            parser::ParsedMessage::Updates(ref mut updates) => {
                 history.add_updates(updates);
             }
         };
     }
 
-    for (k, v) in &history.frames {
-        println!("history: {:?}: {:?}", k, v.len());
-    }
-
-    let binding = serde_json::to_string(&history).unwrap();
-    let buf = binding.as_bytes();
-    let _ = fs::File::create("history.json").and_then(|mut file| file.write_all(buf));
+    println!("realtime: {:?}", history.realtime);
+    println!("updates: {}", history.updates.len());
 
     println!("done");
 }

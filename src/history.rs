@@ -143,45 +143,88 @@ impl History {
         if let Some(realtime) = &self.realtime {
             let mut history_less = realtime.state.clone();
 
-            let weather_updates: Vec<&Value> = self.filter_updates("WeatherData");
-            let mut weather: HashMap<String, Vec<Value>> = HashMap::new();
+            if let Value::Object(ref mut history) = history_less {
+                let weather_updates: Vec<&Value> = self.filter_updates("WeatherData");
+                let mut weather: HashMap<String, Vec<Value>> = HashMap::new();
 
-            for update in &weather_updates {
-                if let Value::Object(obj) = update {
-                    for (k, v) in obj {
-                        if let Some(existing_key) = weather.get_mut(k) {
-                            existing_key.push(v.clone());
-                        } else {
-                            weather.insert(k.to_owned(), vec![v.clone()]);
+                for update in &weather_updates {
+                    if let Value::Object(obj) = update {
+                        for (k, v) in obj {
+                            insert_hashmap_vec(&mut weather, k, v.clone());
                         }
                     }
                 }
-            }
 
-            if let Value::Object(ref mut history) = history_less {
+                let timing_updates: Vec<&Value> = self.filter_updates("TimingData");
+                let mut gaps: HashMap<String, Vec<Value>> = HashMap::new();
+                let mut laptimes: HashMap<String, Vec<Value>> = HashMap::new();
+                let mut sectortimes: HashMap<String, HashMap<String, Vec<Value>>> = HashMap::new();
+
+                for update in &timing_updates {
+                    if let Some(Value::Object(lines)) = update.pointer("/Lines") {
+                        for (rn, v) in lines {
+                            // gaps
+                            if let Some(gap) = v.pointer("/IntervalToPositionAhead/Value") {
+                                insert_hashmap_vec(&mut gaps, rn, gap.clone());
+                            }
+
+                            // laptimes
+                            if let Some(laptime) = v.pointer("/LastLapTime") {
+                                insert_hashmap_vec(&mut laptimes, rn, laptime.clone());
+                            }
+
+                            // sectortimes
+                            if let Some(Value::Object(sectors)) = v.pointer("/Sectors") {
+                                if let Some(existing_key) = sectortimes.get_mut(rn) {
+                                    for (sector_nr, v) in sectors {
+                                        insert_hashmap_vec(existing_key, sector_nr, v.clone());
+                                    }
+                                } else {
+                                    let mut driver: HashMap<String, Vec<Value>> = HashMap::new();
+
+                                    for (sector_nr, v) in sectors {
+                                        insert_hashmap_vec(&mut driver, sector_nr, v.clone());
+                                    }
+                                    sectortimes.insert(rn.to_owned(), driver);
+                                }
+                            }
+                        }
+                    };
+                }
+
                 history.insert(
                     "WeatherData.history".to_owned(),
                     serde_json::to_value(weather).unwrap(),
                 );
-            }
 
-            // weather
-            // - [column]
-            // gap
-            // - Lines.[nr].IntervalToPositionAhead.Value
-            // laptimes
-            // - Lines.[nr].LastLapTime.Value
-            // - Lines.[nr].LastLapTime.OverallFastest
-            // - Lines.[nr].LastLapTime.PersonalFastest
-            // sector times
-            // - Lines.[nr].Sectors.[sector].Value
-            // - Lines.[nr].Sectors.[sector].OverallFastest
-            // - Lines.[nr].Sectors.[sector].PersonalFastest
+                history.insert(
+                    "TimingData.Gap.history".to_owned(),
+                    serde_json::to_value(gaps).unwrap(),
+                );
+
+                history.insert(
+                    "TimingData.Laptime.history".to_owned(),
+                    serde_json::to_value(laptimes).unwrap(),
+                );
+
+                history.insert(
+                    "TimingData.Sectortime.history".to_owned(),
+                    serde_json::to_value(sectortimes).unwrap(),
+                );
+            }
 
             return Some(history_less);
         }
 
         None
+    }
+}
+
+fn insert_hashmap_vec<T>(map: &mut HashMap<String, Vec<T>>, key: &str, value: T) {
+    if let Some(existing_key) = map.get_mut(key) {
+        existing_key.push(value);
+    } else {
+        map.insert(key.to_owned(), vec![value]);
     }
 }
 

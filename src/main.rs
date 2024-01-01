@@ -74,7 +74,7 @@ fn main() {
         for message in messages {
             let parsed = parser::parse_message(message);
             let _ = history_tx.send(parsed);
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(10));
         }
 
         println!("file: done");

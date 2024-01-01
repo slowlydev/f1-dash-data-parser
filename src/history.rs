@@ -131,9 +131,54 @@ impl History {
         None
     }
 
+    fn filter_updates(&self, catagory: &str) -> Vec<&Value> {
+        self.updates
+            .iter()
+            .filter(|el| el.catagory == catagory)
+            .map(|el| &el.state)
+            .collect()
+    }
+
     pub fn get_realtime(&self) -> Option<Value> {
         if let Some(realtime) = &self.realtime {
-            return Some(realtime.state.clone());
+            let mut history_less = realtime.state.clone();
+
+            let weather_updates: Vec<&Value> = self.filter_updates("WeatherData");
+            let mut weather: HashMap<String, Vec<Value>> = HashMap::new();
+
+            for update in &weather_updates {
+                if let Value::Object(obj) = update {
+                    for (k, v) in obj {
+                        if let Some(existing_key) = weather.get_mut(k) {
+                            existing_key.push(v.clone());
+                        } else {
+                            weather.insert(k.to_owned(), vec![v.clone()]);
+                        }
+                    }
+                }
+            }
+
+            if let Value::Object(ref mut history) = history_less {
+                history.insert(
+                    "WeatherData.history".to_owned(),
+                    serde_json::to_value(weather).unwrap(),
+                );
+            }
+
+            // weather
+            // - [column]
+            // gap
+            // - Lines.[nr].IntervalToPositionAhead.Value
+            // laptimes
+            // - Lines.[nr].LastLapTime.Value
+            // - Lines.[nr].LastLapTime.OverallFastest
+            // - Lines.[nr].LastLapTime.PersonalFastest
+            // sector times
+            // - Lines.[nr].Sectors.[sector].Value
+            // - Lines.[nr].Sectors.[sector].OverallFastest
+            // - Lines.[nr].Sectors.[sector].PersonalFastest
+
+            return Some(history_less);
         }
 
         None

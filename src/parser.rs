@@ -61,19 +61,6 @@ pub fn parse_message(message: String) -> ParsedMessage {
     ParsedMessage::Empty
 }
 
-pub fn get_value_path<T: for<'de> serde::Deserialize<'de>>(value: &Value, path: &str) -> Option<T> {
-    let mut current_value = value;
-
-    for key in path.split('.') {
-        current_value = match current_value.get(key) {
-            Some(value) => value,
-            None => return None,
-        };
-    }
-
-    serde_json::from_value(current_value.clone()).ok()
-}
-
 const FORMAT1: &'static str = "%Y-%m-%dT%H:%M:%S%.3fZ";
 const FORMAT2: &'static str = "%Y-%m-%dT%H:%M:%S";
 

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    mem,
     sync::{mpsc, Arc, Mutex},
     thread::{self},
     time::Duration,
@@ -41,6 +42,7 @@ fn main() {
             };
 
             let _ = realtime_tx.send(hist.get_realtime());
+            mem::drop(hist);
         }
     });
 
@@ -48,6 +50,8 @@ fn main() {
         println!("history: delayed: getting new data");
         let mut hist = history_delay.lock().unwrap();
         let updated_states = hist.get_all_delayed();
+        mem::drop(hist);
+
         let _ = delay_response_tx.send(updated_states);
 
         thread::sleep(Duration::from_millis(100));
@@ -58,6 +62,7 @@ fn main() {
             let mut hist = history_delay_request.lock().unwrap();
             println!("history: delayed: got request for {}", request);
             hist.get_delayed(&request);
+            mem::drop(hist);
         }
     });
 
@@ -74,7 +79,7 @@ fn main() {
         for message in messages {
             let parsed = parser::parse_message(message);
             let _ = history_tx.send(parsed);
-            thread::sleep(Duration::from_millis(10));
+            // thread::sleep(Duration::from_millis(5));
         }
 
         println!("file: done");

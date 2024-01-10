@@ -127,18 +127,15 @@ impl History {
 
             self.delay_states
                 .insert(delay.to_owned(), async_state.clone());
+
+            // if let Value::Object(ref mut state) = async_state.state {
+            //     // inject_history(state);
+            // }
+
             return Some(async_state.state);
         }
 
         None
-    }
-
-    fn filter_updates(&self, catagory: &str) -> Vec<&Value> {
-        self.updates
-            .iter()
-            .filter(|el| el.catagory == catagory)
-            .map(|el| &el.state)
-            .collect()
     }
 
     pub fn get_realtime(&self) -> Option<Value> {
@@ -146,30 +143,7 @@ impl History {
             let mut history_less = realtime.state.clone();
 
             if let Value::Object(ref mut history) = history_less {
-                let weather_updates: Vec<&Value> = self.filter_updates("WeatherData");
-                let timing_updates: Vec<&Value> = self.filter_updates("TimingData");
-
-                let analytics = analytics_history_computation(weather_updates, timing_updates);
-
-                history.insert(
-                    "WeatherData.history".to_owned(),
-                    serde_json::to_value(analytics.0).unwrap(),
-                );
-
-                history.insert(
-                    "TimingData.Gap.history".to_owned(),
-                    serde_json::to_value(analytics.1).unwrap(),
-                );
-
-                history.insert(
-                    "TimingData.Laptime.history".to_owned(),
-                    serde_json::to_value(analytics.2).unwrap(),
-                );
-
-                history.insert(
-                    "TimingData.Sectortime.history".to_owned(),
-                    serde_json::to_value(analytics.3).unwrap(),
-                );
+                inject_history(history, &self.updates);
             }
 
             return Some(history_less);
@@ -177,6 +151,44 @@ impl History {
 
         None
     }
+}
+
+fn inject_history(state: &mut serde_json::Map<String, Value>, updates: &Vec<parser::Update>) {
+    let weather_updates: Vec<&Value> =
+        updates
+            .iter()
+            .filter(|up| up.catagory == "WeatherData")
+            .map(|up| &up.state)
+            .collect();
+
+    let timing_updates: Vec<&Value> =
+        updates
+            .iter()
+            .filter(|up| up.catagory == "TimingData")
+            .map(|up| &up.state)
+            .collect();
+
+    let analytics = analytics_history_computation(weather_updates, timing_updates);
+
+    state.insert(
+        "WeatherData.history".to_owned(),
+        serde_json::to_value(analytics.0).unwrap(),
+    );
+
+    state.insert(
+        "TimingData.Gap.history".to_owned(),
+        serde_json::to_value(analytics.1).unwrap(),
+    );
+
+    state.insert(
+        "TimingData.Laptime.history".to_owned(),
+        serde_json::to_value(analytics.2).unwrap(),
+    );
+
+    state.insert(
+        "TimingData.Sectortime.history".to_owned(),
+        serde_json::to_value(analytics.3).unwrap(),
+    );
 }
 
 fn insert_hashmap_vec<T>(map: &mut HashMap<String, Vec<T>>, key: &str, value: T) {

@@ -92,6 +92,16 @@ impl History {
                 existing.next_timestamp = next.timestamp;
             }
 
+            if let Value::Object(ref mut state) = existing.state {
+                inject_history(
+                    state,
+                    self.updates
+                        .iter()
+                        .filter(|up| up.timestamp.timestamp() < delayed_timestamp)
+                        .collect(),
+                );
+            }
+
             return Some(existing.state.clone());
         };
 
@@ -119,7 +129,7 @@ impl History {
             let current = self.updates.get(latest_update_index).unwrap();
             let next = self.updates.get(latest_update_index + 1).unwrap();
 
-            let async_state = AsyncState {
+            let mut async_state = AsyncState {
                 state: base,
                 current_timestamp: current.timestamp,
                 next_timestamp: next.timestamp,
@@ -128,9 +138,15 @@ impl History {
             self.delay_states
                 .insert(delay.to_owned(), async_state.clone());
 
-            // if let Value::Object(ref mut state) = async_state.state {
-            //     // inject_history(state);
-            // }
+            if let Value::Object(ref mut state) = async_state.state {
+                inject_history(
+                    state,
+                    self.updates
+                        .iter()
+                        .filter(|up| up.timestamp.timestamp() < delayed_timestamp)
+                        .collect(),
+                );
+            }
 
             return Some(async_state.state);
         }
@@ -140,20 +156,20 @@ impl History {
 
     pub fn get_realtime(&self) -> Option<Value> {
         if let Some(realtime) = &self.realtime {
-            let mut history_less = realtime.state.clone();
+            let mut history = realtime.state.clone();
 
-            if let Value::Object(ref mut history) = history_less {
-                inject_history(history, &self.updates);
+            if let Value::Object(ref mut state) = history {
+                inject_history(state, self.updates.iter().collect());
             }
 
-            return Some(history_less);
+            return Some(history);
         }
 
         None
     }
 }
 
-fn inject_history(state: &mut serde_json::Map<String, Value>, updates: &Vec<parser::Update>) {
+fn inject_history(state: &mut serde_json::Map<String, Value>, updates: Vec<&parser::Update>) {
     let weather_updates: Vec<&Value> =
         updates
             .iter()
@@ -210,7 +226,9 @@ fn analytics_history_computation(
 
     for update in &weather_updates {
         if let Value::Object(obj) = update {
-            weather.extend(obj.iter().map(|(k, v)| (k.clone(), vec![v.clone()])));
+            for (k, v) in obj {
+                insert_hashmap_vec(&mut weather, k, v.clone());
+            }
         }
     }
 

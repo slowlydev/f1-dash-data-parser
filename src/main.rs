@@ -36,9 +36,7 @@ fn main() {
             match recived_message {
                 parser::ParsedMessage::Empty => (),
                 parser::ParsedMessage::Replay(state) => hist.set_intitial(state),
-                parser::ParsedMessage::Updates(ref mut updates) => {
-                    hist.add_updates(updates);
-                }
+                parser::ParsedMessage::Updates(ref mut updates) => hist.add_updates(updates),
             };
 
             let _ = realtime_tx.send(hist.get_realtime());
@@ -50,9 +48,9 @@ fn main() {
         println!("history: delayed: getting new data");
         let mut hist = history_delay.lock().unwrap();
         let updated_states = hist.get_all_delayed();
-        mem::drop(hist);
 
         let _ = delay_response_tx.send(updated_states);
+        mem::drop(hist);
 
         thread::sleep(Duration::from_millis(100));
     });
@@ -97,6 +95,7 @@ fn main() {
         });
 
     let delayed_handle = thread::spawn(move || {
+        thread::sleep(Duration::from_secs(5));
         println!("delayed: listening");
 
         let delay: i64 = 10;
@@ -106,8 +105,8 @@ fn main() {
 
         for response in delay_response_rx {
             println!("delayed: got response");
-            if let Some(state) = response.get(&delay) {
-                println!("delayed: got state for delay: {}: {}", delay, state);
+            if let Some(_state) = response.get(&delay) {
+                println!("delayed: got state for delay: {}", delay);
             }
         }
     });

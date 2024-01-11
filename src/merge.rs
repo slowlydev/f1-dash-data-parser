@@ -30,9 +30,7 @@ pub fn merge(base: &mut Value, update: &Value) {
                 // find item with racing number eq to k
                 let rnr_item = prev.iter_mut().find(|val| {
                     if let Some(rnr) = val.get("RacingNumber") {
-                        if rnr == k {
-                            return true;
-                        }
+                        return rnr == k;
                     }
                     false
                 });

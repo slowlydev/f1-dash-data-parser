@@ -184,26 +184,26 @@ fn inject_history(state: &mut serde_json::Map<String, Value>, updates: Vec<&pars
             .map(|up| &up.state)
             .collect();
 
-    let analytics = analytics_history_computation(weather_updates, timing_updates);
+    let history = value_history_computation(weather_updates, timing_updates);
 
     state.insert(
         "WeatherData.history".to_owned(),
-        serde_json::to_value(analytics.0).unwrap(),
+        serde_json::to_value(history.0).unwrap(),
     );
 
     state.insert(
         "TimingData.Gap.history".to_owned(),
-        serde_json::to_value(analytics.1).unwrap(),
+        serde_json::to_value(history.1).unwrap(),
     );
 
     state.insert(
         "TimingData.Laptime.history".to_owned(),
-        serde_json::to_value(analytics.2).unwrap(),
+        serde_json::to_value(history.2).unwrap(),
     );
 
     state.insert(
         "TimingData.Sectortime.history".to_owned(),
-        serde_json::to_value(analytics.3).unwrap(),
+        serde_json::to_value(history.3).unwrap(),
     );
 }
 
@@ -215,7 +215,7 @@ fn insert_hashmap_vec<T>(map: &mut HashMap<String, Vec<T>>, key: &str, value: T)
     }
 }
 
-fn analytics_history_computation(
+fn value_history_computation(
     weather_updates: Vec<&Value>,
     timing_updates: Vec<&Value>,
 ) -> (Value, Value, Value, Value) {
